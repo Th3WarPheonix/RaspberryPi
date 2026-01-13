@@ -39,6 +39,34 @@
 - `source venv_folder_path/bin/activate`
 - `pip install RPI.GPIO adafruit-blinka adafruit-circuitpython-mlx90640`
 
+## MPU6050
+### Python
+- `source venv_folder_path/bin/activate`
+- `pip install adafruit-circuitpython-mpu6050`
+
+### C++
+#### Datasheets
+1. https://invensense.tdk.com/wp-content/uploads/2015/02/MPU-6000-Datasheet1.pdf
+2. https://invensense.tdk.com/wp-content/uploads/2015/02/MPU-6000-Register-Map1.pdf
+
+##### WiringPi
+- https://github.com/WiringPi/WiringPi/blob/master/documentation/english/functions.md
+
+##### Snippet
+Create Debian package:
+
+sudo apt install git
+git clone https://github.com/WiringPi/WiringPi.git
+cd WiringPi
+./build debian
+mv debian-template/wiringpi_3.16_arm64.deb .
+Install Debian package:
+
+sudo apt install ./wiringpi_3.16_arm64.deb
+Uninstall Debian package:
+
+sudo apt purge wiringpi
+
 ## Remove Packages
 `sudo apt-get purge packagename`
 `sudo apt autoremove`
