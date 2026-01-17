@@ -14,6 +14,7 @@
 - `pip install picamera2`
 
 ## MLX90640
+### Python
 1. Install system-level dependencies to use the CLI to check if I2C connection is setup properly
 
 - `sudo apt-get install -y i2c-tools`
@@ -38,6 +39,9 @@
 
 - `source venv_folder_path/bin/activate`
 - `pip install RPI.GPIO adafruit-blinka adafruit-circuitpython-mlx90640`
+
+### C++
+1. https://www.melexis.com/en/product/MLX90640/Far-Infrared-Thermal-Sensor-Array?_gl=1*1kk3ies*_up*MQ..*_ga*ODIyNzAxNjc1LjE3NjgzNDE5MTU.*_ga_PS2G499C7D*czE3NjgzNDE5MTQkbzEkZzAkdDE3NjgzNDE5MTQkajYwJGwwJGgw
 
 ## MPU6050
 ### Python
@@ -66,6 +70,11 @@ sudo apt install ./wiringpi_3.16_arm64.deb
 Uninstall Debian package:
 
 sudo apt purge wiringpi
+
+## Slamtec Lidar
+### Python
+- `source venv_folder_path/bin/activate`
+- `pip install rplidar-roboticia`
 
 ## Remove Packages
 `sudo apt-get purge packagename`
