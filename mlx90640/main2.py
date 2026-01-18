@@ -17,6 +17,10 @@ from gpiozero import CPUTemperature
 cpu = CPUTemperature()
 i2c = busio.I2C(board.SCL, board.SDA, frequency=400000) # setup I2C
 mlx = adafruit_mlx90640.MLX90640(i2c) # begin MLX90640 with I2C comm
+
+test_data = [0]*1
+mlx._I2CReadWords(0x2400, test_data)
+
 mlx.refresh_rate = adafruit_mlx90640.RefreshRate.REFRESH_8_HZ # set refresh rate
 mlx_shape = (24,32)
 
