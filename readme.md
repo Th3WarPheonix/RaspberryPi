@@ -1,3 +1,6 @@
+# Overview
+This repo contains many small scripts and programs for the setup of Raspberry Pi external peripherals.
+
 # Setup
 
 ## General
