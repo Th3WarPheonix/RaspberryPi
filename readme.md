@@ -75,10 +75,6 @@ This repo contains many small scripts and programs for the setup of Raspberry Pi
     ioctl_msg[1].buf = (memory address of array of size 1664);
     ioctl_msg[1].flags = 1;
     ```
-
-
-
-
 #### Datahseet
 1. https://www.melexis.com/en/product/MLX90640/Far-Infrared-Thermal-Sensor-Array?_gl=1*1kk3ies*_up*MQ..*_ga*ODIyNzAxNjc1LjE3NjgzNDE5MTU.*_ga_PS2G499C7D*czE3NjgzNDE5MTQkbzEkZzAkdDE3NjgzNDE5MTQkajYwJGwwJGgw
 
@@ -118,3 +114,11 @@ sudo apt purge wiringpi
 ## Remove Packages
 `sudo apt-get purge packagename`
 `sudo apt autoremove`
+
+## Arducam Tof Camera
+
+### C
+- `sudo apt install libopen3d-dev`
+- `sudo apt install libeigen3-dev`
+### SDK
+`https://www.arducam.com/docs/tof-camera-getting-started/index.html`

@@ -4,8 +4,8 @@ LIBS = -lwiringPi -lm
 TARGET = mpu6050_app
 
 # Source files
-SOURCES = main0.cpp
-OBJECTS = $(SOURCES:.cpp=.o)
+SOURCES = main0.c
+OBJECTS = $(SOURCES:.c=.o)
 
 # Default target
 all: $(TARGET)
@@ -15,7 +15,7 @@ $(TARGET): $(OBJECTS)
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJECTS) $(LIBS)
 
 # Compile source files
-%.o: %.cpp
+%.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Clean build artifacts

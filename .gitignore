@@ -1,1 +1,5 @@
 rpi5_testing/*
+arducam_tof_camera/depth_camera_venv/*
+test1.png
+saved_image.png
+depth_contour.png
