@@ -111,10 +111,6 @@ sudo apt purge wiringpi
 - `source venv_folder_path/bin/activate`
 - `pip install rplidar-roboticia`
 
-## Remove Packages
-`sudo apt-get purge packagename`
-`sudo apt autoremove`
-
 ## Arducam Tof Camera
 
 ### C
@@ -122,3 +118,7 @@ sudo apt purge wiringpi
 - `sudo apt install libeigen3-dev`
 ### SDK
 `https://www.arducam.com/docs/tof-camera-getting-started/index.html`
+
+## Remove Packages
+`sudo apt-get purge packagename`
+`sudo apt autoremove`
