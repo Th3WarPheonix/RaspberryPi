@@ -1,38 +1,143 @@
+# Single-file build system for Arducam TOF camera examples instead of the CMake system
+# Usage: make [all|examples|preview_pointcloud|clean]
 
-CXX = /usr/bin/c++
-CXX_FLAGS2 = -Wall -Wextra -O2
-TARGET = preview_pointcloud
+SHELL := /bin/sh
 
-SOURCES = preview_pointcloud.cpp
-OBJECTS = $(SOURCES:.cpp=.cpp.o)
-DEPENDENCIES = $(SOURCES:.cpp=.cpp.o.d)
+CC ?= cc
+CXX ?= c++
+PKG_CONFIG ?= pkg-config
 
-CXX_DEFINES = -DFMT_SHARED -D_GLIBCXX_USE_CXX11_ABI=1
-CXX_INCLUDES = -isystem /usr/include/opencv4 -isystem /usr/include/eigen3
-CXX_FLAGS = -Wno-psabi
+CXXFLAGS ?= -std=c++14 -Wall -Wno-psabi
+CFLAGS ?= -std=c11 -Wall
+ARDUCAM_CXXFLAGS ?= -I/usr/include
+ARDUCAM_CXX_LDFLAGS ?= -lArducamDepthCamera
+ARDUCAM_C_LDFLAGS ?= -lArducamDepthCamera4C
+WITH_OPENCV_WORLD ?= 0
 
 
-# -c option
-# compile or assemble the source files but stop before the linking stage
+# get header files with --cflags
+# get from binaries with --libs
+OPENCV_PKG ?= opencv4
+OPENCV_CFLAGS := $(shell $(PKG_CONFIG) --cflags $(OPENCV_PKG) 2>/dev/null)
+OPENCV_LDFLAGS := $(shell $(PKG_CONFIG) --libs $(OPENCV_PKG) 2>/dev/null)
+# if opencv4 is not found use older version
+ifneq ($(OPENCV_CFLAGS),)
+else
+OPENCV_PKG := opencv
+OPENCV_CFLAGS := $(shell $(PKG_CONFIG) --cflags $(OPENCV_PKG) 2>/dev/null)
+OPENCV_LDFLAGS := $(shell $(PKG_CONFIG) --libs $(OPENCV_PKG) 2>/dev/null)
+endif
 
-# - M options
-# Preprocessor options used to generate Makefile dependency files (.d) alongside object files
-# They track header inclusions so make knows when to recompile
-# MD generates the dependency file
-# MF names the dependency file
-# MT sets the target rule name in the dependency file
+EIGEN_PKG ?= eigen3
+EIGEN_CFLAGS := $(shell $(PKG_CONFIG) --cflags $(EIGEN_PKG) 2>/dev/null)
+EIGEN_LDFLAGS := $(shell $(PKG_CONFIG) --libs $(EIGEN_PKG) 2>/dev/null)
+\
+# ope3d does not always install a pkg-config file
+# if not pkgconfig fails try to find headers and libs manually
+# find /usr /opt /usr/local -name "Open3D.h": Searches the common installation directories for a file named exactly Open3D.h.
+#| head -1: Takes only the first match
+#| xargs dirname: Passes the file path to dirname, which strips the filename and returns the directory (e.g., Open3D.h becomes open3d).
+#| xargs dirname: Runs dirname again on the result to go up one more level (e.g., open3d becomes include). This assumes the header is in a subdirectory like open3d/Open3D.h under the include root.
+OPEN3D_PKG ?= open3d
+OPEN3D_CFLAGS := $(shell $(PKG_CONFIG) --cflags $(OPEN3D_PKG) 2>/dev/null)
+OPEN3D_LDFLAGS := $(shell $(PKG_CONFIG) --libs $(OPEN3D_PKG) 2>/dev/null)
+ifeq ($(OPEN3D_CFLAGS),)
+OPEN3D_INCLUDE := $(shell find /usr /opt /usr/local -name "Open3D.h" 2>/dev/null | head -1 | xargs dirname 2>/dev/null | xargs dirname 2>/dev/null)
+OPEN3D_CFLAGS := $(if $(OPEN3D_INCLUDE),-I$(OPEN3D_INCLUDE),)
+endif
+ifeq ($(OPEN3D_LDFLAGS),)
+OPEN3D_LIB_DIR := $(shell find /usr /opt /usr/local -name "libOpen3D.so*" 2>/dev/null | head -1 | xargs dirname 2>/dev/null)
+OPEN3D_LDFLAGS := $(if $(OPEN3D_LIB_DIR),-L$(OPEN3D_LIB_DIR) -lOpen3D,)
+endif
 
-# Default target
-all: $(TARGET)
+# Note: If still not found, set OPEN3D_CFLAGS and OPEN3D_LDFLAGS manually.
+# Example: OPEN3D_CFLAGS := -I/usr/include
+#         OPEN3D_LDFLAGS := -lOpen3D
 
-$(TARGET): $(OBJECTS)
-	$(CXX) $(OBJECTS) -o $(TARGET) /usr/lib/libArducamDepthCamera.so /usr/lib/aarch64-linux-gnu/libOpen3D.so.0.16.1 /usr/lib/aarch64-linux-gnu/libopencv_stitching.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_alphamat.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_aruco.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_barcode.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_bgsegm.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_bioinspired.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_ccalib.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_cvv.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_dnn_objdetect.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_dnn_superres.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_dpm.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_face.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_freetype.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_fuzzy.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_hdf.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_hfs.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_img_hash.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_intensity_transform.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_line_descriptor.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_mcc.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_quality.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_rapid.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_reg.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_rgbd.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_saliency.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_shape.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_stereo.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_structured_light.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_superres.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_surface_matching.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_tracking.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_videostab.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_viz.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_wechat_qrcode.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_xobjdetect.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_xphoto.so.4.6.0 /usr/lib/libsi4c.so /usr/lib/aarch64-linux-gnu/libfmt.so.9.1.0 /usr/lib/aarch64-linux-gnu/libopencv_highgui.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_datasets.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_plot.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_text.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_ml.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_phase_unwrapping.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_optflow.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_ximgproc.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_video.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_videoio.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_imgcodecs.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_objdetect.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_calib3d.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_dnn.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_features2d.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_flann.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_photo.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_imgproc.so.4.6.0 /usr/lib/aarch64-linux-gnu/libopencv_core.so.4.6.0 
+# Allows using OpenCV's single opencv_world library instead of individual libs
+# better for smaller binaries or specific builds
+# If WITH_OPENCV_WORLD is set to 1, append -lopencv_world to CORE_LDFLAGS
+# Otherwise, use the full OPENCV_LDFLAGS (which includes all individual OpenCV libs).
+ifeq ($(WITH_OPENCV_WORLD),1)
+CORE_LDFLAGS := $(OPENCV_LDFLAGS) -lopencv_world
+else
+CORE_LDFLAGS := $(OPENCV_LDFLAGS)
+endif
 
-%.cpp.o: %.cpp
-	@echo "test"
-	$(CXX) $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT $(OBJECTS) -MF $(M_DEPENDENCIES) -o $@ -c $<
+CXXFLAGS += $(OPENCV_CFLAGS) $(ARDUCAM_CXXFLAGS) $(OPEN3D_CFLAGS) $(EIGEN_CFLAGS)
+CFLAGS += $(OPENCV_CFLAGS) $(ARDUCAM_CXXFLAGS)
 
-run:
-	export MESA_GL_VERSION_OVERRIDE=4.5 && ./$(TARGET)
+EXAMPLE_LDFLAGS := $(ARDUCAM_CXX_LDFLAGS) $(OPENCV_LDFLAGS)
+PREVIEW_LDFLAGS := $(OPEN3D_LDFLAGS) $(ARDUCAM_CXX_LDFLAGS) $(CORE_LDFLAGS) $(EIGEN_CFLAGS)
 
-.PHONY: all clean run
+PREVIEW_DEPTH_CPP_SRC := example/cpp/preview_depth.cpp
+CAPTURE_RAW_CPP_SRC := example/cpp/capture_raw.cpp
+PREVIEW_USB_CPP_SRC := example/cpp/preview_by_usb.cpp
+EXAMPLE_CPP_SRCS := example/cpp/example/parse_arg.cpp example/cpp/example/pid.c example/cpp/example/test.cpp
+PREVIEW_POINTCLOUD_SRC := open3d_preview/preview_pointcloud.cpp
+PREVIEW_DEPTH_C_SRC := example/c/preview_depth.c
+
+PREVIEW_DEPTH_TARGET := build/example/cpp/preview_depth
+CAPTURE_RAW_TARGET := build/example/cpp/capture_raw
+PREVIEW_USB_TARGET := build/example/cpp/preview_usb
+EXAMPLE_TARGET := build/example/cpp/example
+PREVIEW_DEPTH_C_TARGET := build/example/c/preview_depth_c
+OPEN3D_PREVIEW_TARGET := build/open3d_preview/preview_pointcloud
+
+EXAMPLE_TARGETS := $(PREVIEW_DEPTH_TARGET) $(CAPTURE_RAW_TARGET) $(PREVIEW_USB_TARGET) $(EXAMPLE_TARGET) $(PREVIEW_DEPTH_C_TARGET)
+
+.PHONY: all examples preview_pointcloud clean help
+
+all: examples
+# ensure open3d is available before trying to build preview_pointcloud
+ifneq ($(OPEN3D_CFLAGS),)
+all: $(OPEN3D_PREVIEW_TARGET)
+else
+	@printf "Warning: Open3D not found. Install Open3D or set OPEN3D_CFLAGS/OPEN3D_LDFLAGS to build preview_pointcloud.\n"
+endif
+
+examples: $(EXAMPLE_TARGETS)
+
+preview_pointcloud: $(OPEN3D_PREVIEW_TARGET)
+
+$(PREVIEW_DEPTH_TARGET): $(PREVIEW_DEPTH_CPP_SRC)
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $< -o $@ $(EXAMPLE_LDFLAGS)
+
+$(CAPTURE_RAW_TARGET): $(CAPTURE_RAW_CPP_SRC)
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $< -o $@ $(EXAMPLE_LDFLAGS)
+
+$(PREVIEW_USB_TARGET): $(PREVIEW_USB_CPP_SRC)
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $< -o $@ $(EXAMPLE_LDFLAGS)
+
+$(EXAMPLE_TARGET): $(EXAMPLE_CPP_SRCS)
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(EXAMPLE_LDFLAGS)
+
+$(PREVIEW_DEPTH_C_TARGET): $(PREVIEW_DEPTH_C_SRC)
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $< -o $@ $(ARDUCAM_C_LDFLAGS)
+
+$(OPEN3D_PREVIEW_TARGET): $(PREVIEW_POINTCLOUD_SRC)
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $< -o $@ $(PREVIEW_LDFLAGS)
+
+run_pointcloud:
+	export MESA_GL_VERSION_OVERRIDE=4.5 && ./$(OPEN3D_PREVIEW_TARGET)
+
+clean:
+	rm -rf build
+
+help:
+	@printf "Usage:\n"
+	@printf "  make all               Build all example binaries and preview_pointcloud if Open3D is available.\n"
+	@printf "  make examples          Build only the example binaries.\n"
+	@printf "  make preview_pointcloud  Build the Open3D pointcloud preview.\n"
+	@printf "  make clean             Remove generated build artifacts.\n"
+	@printf "  make print-open3d      Print detected Open3D flags.\n"
+
+print-open3d:
+	@printf "OPEN3D_CFLAGS = %s\n" "$(OPEN3D_CFLAGS)"
+	@printf "OPEN3D_LDFLAGS = %s\n" "$(OPEN3D_LDFLAGS)"
