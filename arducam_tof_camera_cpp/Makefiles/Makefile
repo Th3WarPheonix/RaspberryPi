@@ -70,25 +70,25 @@ CFLAGS += $(OPENCV_CFLAGS) $(ARDUCAM_CXXFLAGS)
 EXAMPLE_LDFLAGS := $(ARDUCAM_CXX_LDFLAGS) $(OPENCV_LDFLAGS)
 PREVIEW_LDFLAGS := $(OPEN3D_LDFLAGS) $(ARDUCAM_CXX_LDFLAGS) $(CORE_LDFLAGS) $(EIGEN_CFLAGS)
 
-# PREVIEW_DEPTH_CPP_SRC := example/cpp/preview_depth.cpp
-# CAPTURE_RAW_CPP_SRC := example/cpp/capture_raw.cpp
-# PREVIEW_USB_CPP_SRC := example/cpp/preview_by_usb.cpp
-# EXAMPLE_CPP_SRCS := example/cpp/example/parse_arg.cpp example/cpp/example/pid.c example/cpp/example/test.cpp
+PREVIEW_DEPTH_CPP_SRC := example/cpp/preview_depth.cpp
+CAPTURE_RAW_CPP_SRC := example/cpp/capture_raw.cpp
+PREVIEW_USB_CPP_SRC := example/cpp/preview_by_usb.cpp
+EXAMPLE_CPP_SRCS := example/cpp/example/parse_arg.cpp example/cpp/example/pid.c example/cpp/example/test.cpp
 PREVIEW_POINTCLOUD_SRC := open3d_preview/preview_pointcloud.cpp
-# PREVIEW_DEPTH_C_SRC := example/c/preview_depth.c
+PREVIEW_DEPTH_C_SRC := example/c/preview_depth.c
 
-# PREVIEW_DEPTH_TARGET := build/example/cpp/preview_depth
-# CAPTURE_RAW_TARGET := build/example/cpp/capture_raw
-# PREVIEW_USB_TARGET := build/example/cpp/preview_usb
-# EXAMPLE_TARGET := build/example/cpp/example
-# PREVIEW_DEPTH_C_TARGET := build/example/c/preview_depth_c
+PREVIEW_DEPTH_TARGET := build/example/cpp/preview_depth
+CAPTURE_RAW_TARGET := build/example/cpp/capture_raw
+PREVIEW_USB_TARGET := build/example/cpp/preview_usb
+EXAMPLE_TARGET := build/example/cpp/example
+PREVIEW_DEPTH_C_TARGET := build/example/c/preview_depth_c
 OPEN3D_PREVIEW_TARGET := build/open3d_preview/preview_pointcloud
 
-# EXAMPLE_TARGETS := $(PREVIEW_DEPTH_TARGET) $(CAPTURE_RAW_TARGET) $(PREVIEW_USB_TARGET) $(EXAMPLE_TARGET) $(PREVIEW_DEPTH_C_TARGET)
+EXAMPLE_TARGETS := $(PREVIEW_DEPTH_TARGET) $(CAPTURE_RAW_TARGET) $(PREVIEW_USB_TARGET) $(EXAMPLE_TARGET) $(PREVIEW_DEPTH_C_TARGET)
 
-.PHONY: all examples run clean help
+.PHONY: all examples preview_pointcloud clean help
 
-all: preview_pointcloud
+all: examples
 # ensure open3d is available before trying to build preview_pointcloud
 ifneq ($(OPEN3D_CFLAGS),)
 all: $(OPEN3D_PREVIEW_TARGET)
@@ -96,52 +96,35 @@ else
 	@printf "Warning: Open3D not found. Install Open3D or set OPEN3D_CFLAGS/OPEN3D_LDFLAGS to build preview_pointcloud.\n"
 endif
 
-# examples: $(EXAMPLE_TARGETS)
+examples: $(EXAMPLE_TARGETS)
 
 preview_pointcloud: $(OPEN3D_PREVIEW_TARGET)
 
-# $(PREVIEW_DEPTH_TARGET): $(PREVIEW_DEPTH_CPP_SRC)
-# 	@mkdir -p $(dir $@)
-# 	$(CXX) $(CXXFLAGS) $< -o $@ $(EXAMPLE_LDFLAGS)
+$(PREVIEW_DEPTH_TARGET): $(PREVIEW_DEPTH_CPP_SRC)
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $< -o $@ $(EXAMPLE_LDFLAGS)
 
-# $(CAPTURE_RAW_TARGET): $(CAPTURE_RAW_CPP_SRC)
-# 	@mkdir -p $(dir $@)
-# 	$(CXX) $(CXXFLAGS) $< -o $@ $(EXAMPLE_LDFLAGS)
+$(CAPTURE_RAW_TARGET): $(CAPTURE_RAW_CPP_SRC)
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $< -o $@ $(EXAMPLE_LDFLAGS)
 
-# $(PREVIEW_USB_TARGET): $(PREVIEW_USB_CPP_SRC)
-# 	@mkdir -p $(dir $@)
-# 	$(CXX) $(CXXFLAGS) $< -o $@ $(EXAMPLE_LDFLAGS)
+$(PREVIEW_USB_TARGET): $(PREVIEW_USB_CPP_SRC)
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $< -o $@ $(EXAMPLE_LDFLAGS)
 
-# $(EXAMPLE_TARGET): $(EXAMPLE_CPP_SRCS)
-# 	@mkdir -p $(dir $@)
-# 	$(CXX) $(CXXFLAGS) $^ -o $@ $(EXAMPLE_LDFLAGS)
+$(EXAMPLE_TARGET): $(EXAMPLE_CPP_SRCS)
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(EXAMPLE_LDFLAGS)
 
-# $(PREVIEW_DEPTH_C_TARGET): $(PREVIEW_DEPTH_C_SRC)
-# 	@mkdir -p $(dir $@)
-# 	$(CC) $(CFLAGS) $< -o $@ $(ARDUCAM_C_LDFLAGS)
-
-# -c option
-# compile or assemble the source files but stop before the linking stage
-
-# - M options
-# Preprocessor options used to generate Makefile dependency files (.d) alongside object files
-# They track header inclusions so make knows when to recompile
-# MD generates the dependency file
-# MF names the dependency file
-# MT sets the target rule name in the dependency file
-
-# # Default target
-# all: $(TARGET)
-
-# %.cpp.o: %.cpp
-# 	@echo "test"
-# 	$(CXX) $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT $(OBJECTS) -MF $(M_DEPENDENCIES) -o $@ -c $<
+$(PREVIEW_DEPTH_C_TARGET): $(PREVIEW_DEPTH_C_SRC)
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $< -o $@ $(ARDUCAM_C_LDFLAGS)
 
 $(OPEN3D_PREVIEW_TARGET): $(PREVIEW_POINTCLOUD_SRC)
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) $< -o $@ $(PREVIEW_LDFLAGS)
 
-run:
+run_pointcloud:
 	export MESA_GL_VERSION_OVERRIDE=4.5 && ./$(OPEN3D_PREVIEW_TARGET)
 
 clean:

@@ -35,11 +35,14 @@ bool enable_confidence_ct = false;
 int confidence_value = 0;
 // std::atomic<int> confidence_value{0};
 
+// Trackbar callback: update the global confidence threshold when the user adjusts the slider.
 void on_confidence_changed(int pos, void* userdata)
 {
     confidence_value = pos;
 }
 
+// Mouse callback: update the selected or follow rectangle in the preview window.
+// The rectangle is used to show the current sampling region for depth measurement.
 void onMouse(int event, int x, int y, int flags, void* param)
 {
     if (x < 4 || x > (max_width - 4) || y < 4 || y > (max_height - 4))
@@ -64,6 +67,7 @@ void onMouse(int event, int x, int y, int flags, void* param)
     }
 }
 
+// Display current frame rate once per second and keep terminal output tidy.
 LOCAL void display_fps(void)
 {
     using std::chrono::high_resolution_clock;
@@ -85,6 +89,7 @@ LOCAL void display_fps(void)
 #endif
 }
 
+// Save the depth buffer to a timestamped raw file for offline analysis.
 LOCAL void save_image(float* image, int width, int height)
 {
     using namespace std::literals;
@@ -97,6 +102,7 @@ LOCAL void save_image(float* image, int width, int height)
     file.close();
 }
 
+// Rotate an OpenCV image by 180 degrees using vertical and horizontal flips.
 LOCAL cv::Mat matRotateClockWise180(cv::Mat src)
 {
     if (src.empty()) {
@@ -108,6 +114,7 @@ LOCAL cv::Mat matRotateClockWise180(cv::Mat src)
     return src;
 }
 
+// Mark low-confidence pixels in the gray preview image as white based on the current threshold.
 LOCAL void getPreview(cv::Mat preview_ptr, cv::Mat amplitude_image_ptr)
 {
     auto len = preview_ptr.rows * preview_ptr.cols;
@@ -119,12 +126,14 @@ LOCAL void getPreview(cv::Mat preview_ptr, cv::Mat amplitude_image_ptr)
     }
 }
 
+// Apply a confidence mask to the RGB preview by zeroing pixels below the threshold.
 LOCAL void getPreviewRGB(cv::Mat preview_ptr, cv::Mat amplitude_image_ptr)
 {
     preview_ptr.setTo(cv::Scalar(0, 0, 0), amplitude_image_ptr < confidence_value);
     // cv::GaussianBlur(preview_ptr, preview_ptr, cv::Size(7, 7), 0);
 }
 
+// Read a camera control value from the TOF camera and convert it with an optional scale factor.
 LOCAL bool getControl(ArducamTOFCamera& tof, Arducam::Control mode, float& val, float alpha = 1.0)
 {
     int tmp = 0;
@@ -137,6 +146,7 @@ LOCAL bool getControl(ArducamTOFCamera& tof, Arducam::Control mode, float& val, 
     return true;
 }
 
+// Poll a delayed key event and return false if the user pressed ESC or 'q'.
 LOCAL bool checkExit()
 {
     int key = cv::waitKey(500);
@@ -148,6 +158,7 @@ LOCAL bool checkExit()
     return true;
 }
 
+// Handle keyboard input during point cloud preview, including quit, save, and confidence adjustments.
 bool processKey(const open3d::geometry::PointCloud& pcd, float* depth_ptr, const Arducam::FrameFormat& format)
 {
     auto key = cv::waitKey(1);
@@ -213,6 +224,7 @@ bool processKey(const open3d::geometry::PointCloud& pcd, float* depth_ptr, const
     return true;
 }
 
+// Capture one depth frame, build a point cloud, apply the confidence mask, and update the preview state.
 bool pc_loop(ArducamTOFCamera& tof, std::shared_ptr<open3d::geometry::PointCloud>& pcd, Eigen::Matrix4d transfrom)
 {
     Arducam::FrameFormat format;
@@ -284,6 +296,7 @@ bool pc_loop(ArducamTOFCamera& tof, std::shared_ptr<open3d::geometry::PointCloud
     return true;
 }
 
+// Entry point: initialize the camera, create preview and point cloud windows, and run the main capture loop.
 int main(int argc, char* argv[])
 {
     ArducamTOFCamera tof;
@@ -322,10 +335,13 @@ int main(int argc, char* argv[])
     cv::namedWindow("preview", cv::WINDOW_NORMAL);
     cv::setMouseCallback("preview", onMouse);
     if (info.device_type == Arducam::DeviceType::DEVICE_VGA) {
-        // only vga support confidence
+        std::cout << "Confidence control is enabled." << NL;
+
         enable_confidence_ct = true;
         cv::createTrackbar("confidence", "preview", NULL, 255, on_confidence_changed);
         cv::setTrackbarPos("confidence", "preview", confidence_value);
+    } else {
+        std::cout << "Confidence control is not supported for this device type (i.e. not a VGA device)." << NL;
     }
 
     Eigen::Matrix4d m = Eigen::Matrix4d::Identity();
